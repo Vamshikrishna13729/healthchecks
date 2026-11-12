@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from statistics import median
 
 # The spread is never allowed to be smaller than this share of the usual interval.
@@ -34,3 +36,7 @@ def is_anomalous(
     return anomaly_score(history, new_interval) > THRESHOLDS[sensitivity]
 
 
+def intervals(timestamps: list[datetime]) -> list[float]:
+    """Return the seconds between consecutive timestamps, oldest first."""
+    ordered = sorted(timestamps)
+    return [(b - a).total_seconds() for a, b in zip(ordered, ordered[1:])]

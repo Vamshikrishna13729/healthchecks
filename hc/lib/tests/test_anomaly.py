@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from unittest import TestCase
 
-from hc.lib.anomaly import anomaly_score, is_anomalous
+from hc.lib.anomaly import anomaly_score, intervals, is_anomalous
 
 HISTORY = [24, 25, 23, 26, 24, 22, 25, 23, 26, 24]
 
@@ -31,5 +33,22 @@ class IsAnomalousTestCase(TestCase):
         self.assertTrue(is_anomalous(HISTORY, 26.5, "high"))
     def test_short_history_is_never_anomalous(self) -> None:
         self.assertFalse(is_anomalous([24, 24, 24], 100))
+
+
+class IntervalsTestCase(TestCase):
+    def test_it_returns_seconds_between_pings(self) -> None:
+        times = [
+            datetime(2026, 11, 9, 2, 0),
+            datetime(2026, 11, 9, 2, 30),
+            datetime(2026, 11, 9, 3, 30),
+        ]
+        self.assertEqual(intervals(times), [1800.0, 3600.0])
+
+    def test_it_sorts_the_timestamps_first(self) -> None:
+        times = [datetime(2026, 11, 9, 2, 30), datetime(2026, 11, 9, 2, 0)]
+        self.assertEqual(intervals(times), [1800.0])
+
+    def test_one_ping_gives_no_interval(self) -> None:
+        self.assertEqual(intervals([datetime(2026, 11, 9, 2, 0)]), [])
 
 
