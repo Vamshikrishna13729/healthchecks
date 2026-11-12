@@ -211,6 +211,12 @@ class Check(models.Model):
     failure_kw = models.CharField(max_length=200, blank=True)
     methods = models.CharField(max_length=30, blank=True)
     manual_resume = models.BooleanField(default=False)
+    anomaly_enabled = models.BooleanField(default=False)
+    anomaly_sensitivity = models.CharField(
+        max_length=10,
+        default="medium",
+        choices=(("low", "Low"), ("medium", "Medium"), ("high", "High")),
+    )
     badge_key = models.UUIDField(default=uuid.uuid4, unique=True)
 
     n_pings = models.IntegerField(default=0)
