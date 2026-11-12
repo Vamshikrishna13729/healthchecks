@@ -7,17 +7,19 @@ from statistics import median
 # The spread is never allowed to be smaller than this share of the usual interval.
 MIN_SPREAD_RATIO = 0.01
 
+MIN_HISTORY = 10
 
+THRESHOLDS = {"low": 4.0, "medium": 3.0, "high": 2.0}
 def anomaly_score(history: list[float], new_interval: float) -> float:
     """Return how unusual new_interval is, compared with history."""
     middle = median(history)
     spread = median(abs(x - middle) for x in history)
     spread = max(spread, middle * MIN_SPREAD_RATIO)
 # Scoring starts only after this many intervals are recorded.
-    MIN_HISTORY = 10
+    
 
 # A score above the threshold is anomalous. Higher sensitivity means a lower threshold.
-    THRESHOLDS = {"low": 4.0, "medium": 3.0, "high": 2.0}
+    
     if spread == 0:
         return 0.0
     return abs(new_interval - middle) / spread
