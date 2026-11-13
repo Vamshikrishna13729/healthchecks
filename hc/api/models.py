@@ -225,6 +225,7 @@ class Check(models.Model):
     last_start_rid = models.UUIDField(null=True)
     last_duration = models.DurationField(null=True, blank=True)
     has_confirmation_link = models.BooleanField(default=False)
+    last_anomaly = models.DateTimeField(null=True, blank=True)
     alert_after = models.DateTimeField(null=True, blank=True, editable=False)
     status = models.CharField(max_length=6, choices=STATUSES, default="new")
 
