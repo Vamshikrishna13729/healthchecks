@@ -47,7 +47,7 @@ class GetCheckTestCase(BaseTestCase):
         self.assertEqual(r["Access-Control-Allow-Origin"], "*")
 
         doc = r.json()
-        self.assertEqual(len(doc), 29)
+        self.assertEqual(len(doc), 32)
 
         self.assertEqual(doc["uuid"], str(self.a1.code))
         self.assertEqual(doc["slug"], "alice-1-custom-slug")
@@ -93,7 +93,7 @@ class GetCheckTestCase(BaseTestCase):
         self.assertEqual(r["Access-Control-Allow-Origin"], "*")
 
         doc = r.json()
-        self.assertEqual(len(doc), 29)
+        self.assertEqual(len(doc), 32)
 
         self.assertEqual(doc["timeout"], 3600)
         self.assertEqual(doc["grace"], 900)

@@ -128,6 +128,9 @@ class CheckDict(TypedDict):
     last_ping: str | None
     next_ping: str | None
     manual_resume: bool
+    anomaly_enabled: bool
+    anomaly_sensitivity: str
+    last_anomaly: str | None
     methods: str
     subject: str
     subject_fail: str
@@ -458,6 +461,9 @@ class Check(models.Model):
             "last_ping": isostring(self.last_ping),
             "next_ping": isostring(self.get_grace_start()),
             "manual_resume": self.manual_resume,
+            "anomaly_enabled": self.anomaly_enabled,
+            "anomaly_sensitivity": self.anomaly_sensitivity,
+            "last_anomaly": isostring(self.last_anomaly),
             "methods": self.methods,
             "subject": self.success_kw if self.filter_subject else "",
             "subject_fail": self.failure_kw if self.filter_subject else "",
