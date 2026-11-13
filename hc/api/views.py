@@ -59,6 +59,8 @@ def guess_kind(schedule: str) -> str:
 
 
 class Spec(BaseModel):
+    anomaly_enabled: bool | None = None
+    anomaly_sensitivity: Literal["low", "medium", "high"] | None = None
     channels: str | None = None
     desc: str | None = Field(None, max_length=10000)
     failure_kw: str | None = Field(None, max_length=200)
@@ -392,6 +394,8 @@ def _update(check: Check, spec: Spec, v: int) -> None:
         update_fields.update(("failure_kw", "filter_subject"))
 
     for key in (
+        "anomaly_enabled",
+        "anomaly_sensitivity",
         "slug",
         "tags",
         "desc",

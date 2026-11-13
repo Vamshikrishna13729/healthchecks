@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 
 from hc.accounts.models import Project
 from hc.api import transports
+from hc.lib.anomaly import MAX_HISTORY, intervals, is_anomalous
 from hc.lib import emails
 from hc.lib.date import month_boundaries, seconds_in_month
 from hc.lib.s3 import GetObjectError, get_object, put_object, remove_objects
@@ -127,6 +128,9 @@ class CheckDict(TypedDict):
     last_ping: str | None
     next_ping: str | None
     manual_resume: bool
+    anomaly_enabled: bool
+    anomaly_sensitivity: str
+    last_anomaly: str | None
     methods: str
     subject: str
     subject_fail: str
@@ -211,6 +215,12 @@ class Check(models.Model):
     failure_kw = models.CharField(max_length=200, blank=True)
     methods = models.CharField(max_length=30, blank=True)
     manual_resume = models.BooleanField(default=False)
+    anomaly_enabled = models.BooleanField(default=False)
+    anomaly_sensitivity = models.CharField(
+        max_length=10,
+        default="medium",
+        choices=(("low", "Low"), ("medium", "Medium"), ("high", "High")),
+    )
     badge_key = models.UUIDField(default=uuid.uuid4, unique=True)
 
     n_pings = models.IntegerField(default=0)
@@ -219,6 +229,7 @@ class Check(models.Model):
     last_start_rid = models.UUIDField(null=True)
     last_duration = models.DurationField(null=True, blank=True)
     has_confirmation_link = models.BooleanField(default=False)
+    last_anomaly = models.DateTimeField(null=True, blank=True)
     alert_after = models.DateTimeField(null=True, blank=True, editable=False)
     status = models.CharField(max_length=6, choices=STATUSES, default="new")
 
@@ -450,6 +461,9 @@ class Check(models.Model):
             "last_ping": isostring(self.last_ping),
             "next_ping": isostring(self.get_grace_start()),
             "manual_resume": self.manual_resume,
+            "anomaly_enabled": self.anomaly_enabled,
+            "anomaly_sensitivity": self.anomaly_sensitivity,
+            "last_anomaly": isostring(self.last_anomaly),
             "methods": self.methods,
             "subject": self.success_kw if self.filter_subject else "",
             "subject_fail": self.failure_kw if self.filter_subject else "",
@@ -568,9 +582,25 @@ class Check(models.Model):
         if ping.object_size:
             put_object(self.code, ping.n, body)
 
+        # Run anomaly detection outside the transaction, to keep the lock short:
+        if self.anomaly_enabled and action == "success":
+            self.check_anomaly(ping.created)
+
         # Every 100 received pings, prune old pings and notifications:
         if self.n_pings % 100 == 0:
             self.prune()
+
+    def check_anomaly(self, ping_time: datetime) -> None:
+        """Set last_anomaly to ping_time if the latest ping interval is unusual."""
+        q = self.ping_set.filter(models.Q(kind__isnull=True) | models.Q(kind=""))
+        q = q.order_by("-id").values_list("created", flat=True)
+        gaps = intervals(list(q[: MAX_HISTORY + 2]))
+        if not gaps:
+            return
+
+        history, latest = gaps[:-1], gaps[-1]
+        if is_anomalous(history, latest, self.anomaly_sensitivity):
+            Check.objects.filter(id=self.id).update(last_anomaly=ping_time)
 
     def prune(self, wait: bool = False) -> None:
         """Remove old pings and notifications."""
