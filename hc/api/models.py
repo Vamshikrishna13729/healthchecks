@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 
 from hc.accounts.models import Project
 from hc.api import transports
+from hc.lib.anomaly import MAX_HISTORY, intervals, is_anomalous
 from hc.lib import emails
 from hc.lib.date import month_boundaries, seconds_in_month
 from hc.lib.s3 import GetObjectError, get_object, put_object, remove_objects
@@ -575,9 +576,25 @@ class Check(models.Model):
         if ping.object_size:
             put_object(self.code, ping.n, body)
 
+        # Run anomaly detection outside the transaction, to keep the lock short:
+        if self.anomaly_enabled and action == "success":
+            self.check_anomaly(ping.created)
+
         # Every 100 received pings, prune old pings and notifications:
         if self.n_pings % 100 == 0:
             self.prune()
+
+    def check_anomaly(self, ping_time: datetime) -> None:
+        """Set last_anomaly to ping_time if the latest ping interval is unusual."""
+        q = self.ping_set.filter(models.Q(kind__isnull=True) | models.Q(kind=""))
+        q = q.order_by("-id").values_list("created", flat=True)
+        gaps = intervals(list(q[: MAX_HISTORY + 2]))
+        if not gaps:
+            return
+
+        history, latest = gaps[:-1], gaps[-1]
+        if is_anomalous(history, latest, self.anomaly_sensitivity):
+            Check.objects.filter(id=self.id).update(last_anomaly=ping_time)
 
     def prune(self, wait: bool = False) -> None:
         """Remove old pings and notifications."""
