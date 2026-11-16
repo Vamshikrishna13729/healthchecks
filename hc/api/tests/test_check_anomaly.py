@@ -69,3 +69,7 @@ class CheckAnomalyTestCase(BaseTestCase):
         self.add_history(24.6)
         self.ping()
         self.assertIsNotNone(self.check.last_anomaly)
+
+    def test_first_ping_has_no_interval(self) -> None:
+        self.ping()
+        self.assertIsNone(self.check.last_anomaly)

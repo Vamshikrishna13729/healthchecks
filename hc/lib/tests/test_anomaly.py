@@ -52,3 +52,8 @@ class IntervalsTestCase(TestCase):
         self.assertEqual(intervals([datetime(2026, 11, 9, 2, 0)]), [])
 
 
+
+
+class ZeroSpreadTestCase(TestCase):
+    def test_zero_intervals_score_zero(self) -> None:
+        self.assertEqual(anomaly_score([0, 0, 0], 5), 0.0)
