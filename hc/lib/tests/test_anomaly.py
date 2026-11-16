@@ -11,10 +11,10 @@ HISTORY = [24, 25, 23, 26, 24, 22, 25, 23, 26, 24]
 
 class AnomalyScoreTestCase(TestCase):
     def test_far_interval_scores_high(self) -> None:
-        self.assertEqual(anomaly_score(HISTORY, 31), 7.0)
+        self.assertAlmostEqual(anomaly_score(HISTORY, 31), 4.72, places=2)
 
     def test_close_interval_scores_low(self) -> None:
-        self.assertEqual(anomaly_score(HISTORY, 25), 1.0)
+        self.assertAlmostEqual(anomaly_score(HISTORY, 25), 0.67, places=2)
 
     def test_identical_history_does_not_crash(self) -> None:
         score = anomaly_score([24, 24, 24, 24, 24], 31)
@@ -29,8 +29,8 @@ class IsAnomalousTestCase(TestCase):
         self.assertFalse(is_anomalous(HISTORY, 25))
 
     def test_high_sensitivity_flags_smaller_change(self) -> None:
-        self.assertFalse(is_anomalous(HISTORY, 26.5, "medium"))
-        self.assertTrue(is_anomalous(HISTORY, 26.5, "high"))
+        self.assertFalse(is_anomalous(HISTORY, 27.5, "medium"))
+        self.assertTrue(is_anomalous(HISTORY, 27.5, "high"))
     def test_short_history_is_never_anomalous(self) -> None:
         self.assertFalse(is_anomalous([24, 24, 24], 100))
 

@@ -15,11 +15,14 @@ MIN_HISTORY = 10
 # At most this many recent intervals are compared.
 MAX_HISTORY = 50
 
+# Multiplying the MAD by this constant makes it comparable to a standard deviation.
+MAD_SCALE = 1.4826
+
 THRESHOLDS = {"low": 4.0, "medium": 3.0, "high": 2.0}
 def anomaly_score(history: Sequence[float], new_interval: float) -> float:
     """Return how unusual new_interval is, compared with history."""
     middle = median(history)
-    spread = median(abs(x - middle) for x in history)
+    spread = MAD_SCALE * median(abs(x - middle) for x in history)
     spread = max(spread, middle * MIN_SPREAD_RATIO)
 # Scoring starts only after this many intervals are recorded.
     
