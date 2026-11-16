@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 
 from statistics import median
@@ -15,7 +16,7 @@ MIN_HISTORY = 10
 MAX_HISTORY = 50
 
 THRESHOLDS = {"low": 4.0, "medium": 3.0, "high": 2.0}
-def anomaly_score(history: list[float], new_interval: float) -> float:
+def anomaly_score(history: Sequence[float], new_interval: float) -> float:
     """Return how unusual new_interval is, compared with history."""
     middle = median(history)
     spread = median(abs(x - middle) for x in history)
@@ -31,7 +32,7 @@ def anomaly_score(history: list[float], new_interval: float) -> float:
 
 
 def is_anomalous(
-    history: list[float], new_interval: float, sensitivity: str = "medium"
+    history: Sequence[float], new_interval: float, sensitivity: str = "medium"
 ) -> bool:
     """Return True if new_interval is unusual for this history."""
     if len(history) < MIN_HISTORY:

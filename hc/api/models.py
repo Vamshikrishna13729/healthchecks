@@ -592,9 +592,9 @@ class Check(models.Model):
 
     def check_anomaly(self, ping_time: datetime) -> None:
         """Set last_anomaly to ping_time if the latest ping interval is unusual."""
-        q = self.ping_set.filter(models.Q(kind__isnull=True) | models.Q(kind=""))
-        q = q.order_by("-id").values_list("created", flat=True)
-        gaps = intervals(list(q[: MAX_HISTORY + 2]))
+        pings = self.ping_set.filter(models.Q(kind__isnull=True) | models.Q(kind=""))
+        times = pings.order_by("-id").values_list("created", flat=True)
+        gaps = intervals(list(times[: MAX_HISTORY + 2]))
         if not gaps:
             return
 
